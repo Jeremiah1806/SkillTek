@@ -1,18 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
 venv/
 .venv/
 env/
-__pycache__/
-*.pyc
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables and secrets
 .env
 .env.*
 !.env.example
+.envrc
+.pypirc
+
+# Django
+*.log
+local_settings.py
 db.sqlite3
+db.sqlite3-journal
 *.sqlite3
 staticfiles/
 media/
+
+# Build and distribution
+build/
+dist/
+downloads/
+*.egg-info/
+.eggs/
+wheels/
+pip-wheel-metadata/
+
+# Tests and coverage
 .pytest_cache/
 .coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# Editors
 .idea/
 .vscode/
+.spyderproject
+.spyproject
+.ropeproject
+
+# Other tools
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.pyre/
+.ipynb_checkpoints/
 .DS_Store
 Thumbs.db
+tempCodeRunnerFile.py
+
+# Packaging and local tooling
+.python-version
+.pdm-python
+.pdm-build/
+.pixi/
+.streamlit/secrets.toml
