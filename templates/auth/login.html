@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Login | SkillTek India{% endblock %}
+
+{% block content %}
+
+<div class="card" style="max-width: 500px; margin: 0 auto;">
+    <div class="page-header">
+        <h1>Welcome back</h1>
+        <p>Sign in to your SkillTek India account.</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+
+    <br>
+
+    <p>
+        Don't have an account?
+        <a href="{% url 'register' %}">Create one</a>
+    </p>
+</div>
+
+{% endblock %}

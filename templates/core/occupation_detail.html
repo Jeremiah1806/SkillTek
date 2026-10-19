@@ -1,0 +1,921 @@
+{% extends "base.html" %}
+
+{% block title %}{{ occupation.name }} Intelligence | SkillTek{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-4 px-lg-5 py-4">
+
+```
+<!-- Header -->
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+
+    <div>
+
+        <div class="small text-uppercase fw-semibold text-primary mb-2">
+            Occupation Intelligence
+        </div>
+
+        <h1 class="display-6 fw-bold mb-2">
+            {{ occupation.name }}
+        </h1>
+
+        <p class="text-secondary mb-0">
+            {{ occupation.sector.name }}
+            ·
+            Skill level {{ occupation.skill_level }}
+        </p>
+
+    </div>
+
+    <div class="text-lg-end">
+
+        <div class="small text-secondary">
+            Forecast horizon
+        </div>
+
+        {% if latest_forecast %}
+            <div class="fw-semibold">
+                Through {{ latest_forecast.forecast_month|date:"F Y" }}
+            </div>
+        {% else %}
+            <div class="fw-semibold">
+                No forecast data
+            </div>
+        {% endif %}
+
+    </div>
+
+</div>
+
+<!-- KPI cards -->
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-lg-3">
+        <div class="skilltek-card h-100 p-4">
+
+            <div class="small text-secondary mb-2">
+                Current Demand
+            </div>
+
+            <div class="display-6 fw-bold">
+                {{ current_demand }}
+            </div>
+
+            <div class="small text-secondary mt-1">
+                Forecasted openings
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="skilltek-card h-100 p-4">
+
+            <div class="small text-secondary mb-2">
+                Current Supply
+            </div>
+
+            <div class="display-6 fw-bold">
+                {{ current_supply }}
+            </div>
+
+            <div class="small text-secondary mt-1">
+                Available workforce
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="skilltek-card h-100 p-4">
+
+            <div class="small text-secondary mb-2">
+                Projected Gap
+            </div>
+
+            <div class="display-6 fw-bold {% if projected_gap > 0 %}text-danger{% elif projected_gap < 0 %}text-warning-emphasis{% endif %}">
+                {% if projected_gap > 0 %}+{% endif %}{{ projected_gap }}
+            </div>
+
+            <div class="small text-secondary mt-1">
+                At end of forecast horizon
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="skilltek-card h-100 p-4">
+
+            <div class="small text-secondary mb-2">
+                Average Risk
+            </div>
+
+            <div class="display-6 fw-bold">
+                {{ average_risk|floatformat:0 }}
+            </div>
+
+            <div class="small text-secondary mt-1">
+                Across district markets
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Forecast -->
+<div class="skilltek-card mb-4">
+
+    <div class="p-4 border-bottom">
+
+        <div>
+            <h5 class="fw-bold mb-1">
+                Demand & Supply Forecast
+            </h5>
+
+            <p class="small text-secondary mb-0">
+                Aggregated forecast trajectory across all monitored districts.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="p-4">
+
+        <div
+            id="occupationForecastChart"
+            style="width:100%; min-height:360px;"
+        ></div>
+
+    </div>
+
+</div>
+
+<!-- Market overview -->
+<div class="row g-4 mb-4">
+
+    <div class="col-12 col-xl-8">
+
+        <div class="skilltek-card h-100">
+
+            <div class="p-4 border-bottom">
+
+                <div>
+                    <h5 class="fw-bold mb-1">
+                        District Skill Markets
+                    </h5>
+
+                    <p class="small text-secondary mb-0">
+                        Where {{ occupation.name }} is becoming scarce or oversupplied.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="table align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th class="ps-4">
+                                District
+                            </th>
+                            <th>
+                                Projected gap
+                            </th>
+                            <th>
+                                Trend
+                            </th>
+                            <th>
+                                Risk
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for market in highest_risk %}
+
+                        <tr>
+
+                            <td class="ps-4">
+
+                                <a
+                                    href="{% url 'district_detail' market.district.id %}"
+                                    class="text-decoration-none"
+                                >
+                                    <div class="fw-semibold text-primary">
+                                        {{ market.district.name }}
+                                    </div>
+
+                                    <div class="small text-secondary">
+                                        {{ market.district.state.name }}
+                                    </div>
+                                </a>
+
+                            </td>
+
+                            <td>
+
+                                {% if market.last_gap > 0 %}
+
+                                    <span class="fw-semibold text-danger">
+                                        +{{ market.last_gap|floatformat:0 }}
+                                    </span>
+
+                                    <div class="small text-secondary">
+                                        shortage
+                                    </div>
+
+                                {% elif market.last_gap < 0 %}
+
+                                    <span class="fw-semibold text-warning-emphasis">
+                                        {{ market.last_gap|floatformat:0 }}
+                                    </span>
+
+                                    <div class="small text-secondary">
+                                        oversupply
+                                    </div>
+
+                                {% else %}
+
+                                    <span class="fw-semibold">
+                                        Balanced
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {% if market.trend == "worsening" %}
+
+                                    <span class="badge bg-danger-subtle text-danger">
+                                        <span
+                                            class="material-symbols-outlined align-middle"
+                                            style="font-size:15px;"
+                                        >
+                                            trending_up
+                                        </span>
+                                        Worsening
+                                    </span>
+
+                                {% elif market.trend == "improving" %}
+
+                                    <span class="badge bg-success-subtle text-success">
+                                        <span
+                                            class="material-symbols-outlined align-middle"
+                                            style="font-size:15px;"
+                                        >
+                                            trending_down
+                                        </span>
+                                        Improving
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary-subtle text-secondary">
+                                        Stable
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <div class="fw-bold">
+                                    {{ market.maximum_risk|floatformat:0 }}
+                                </div>
+
+                                <div class="small text-secondary">
+                                    / 100
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+                            <td
+                                colspan="4"
+                                class="text-center py-5 text-secondary"
+                            >
+                                No district market data available.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-12 col-xl-4">
+
+        <div class="skilltek-card h-100 p-4">
+
+            <div class="small text-uppercase fw-semibold text-primary mb-3">
+                Market status
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+
+                <span class="text-secondary">
+                    Districts monitored
+                </span>
+
+                <span class="fw-bold">
+                    {{ total_districts }}
+                </span>
+
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+
+                <span class="text-secondary">
+                    Shortage markets
+                </span>
+
+                <span class="fw-bold text-danger">
+                    {{ shortage_markets }}
+                </span>
+
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+
+                <span class="text-secondary">
+                    Oversupply markets
+                </span>
+
+                <span class="fw-bold text-warning-emphasis">
+                    {{ oversupply_markets }}
+                </span>
+
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center py-3">
+
+                <span class="text-secondary">
+                    Critical shortage markets
+                </span>
+
+                <span class="fw-bold text-danger">
+                    {{ critical_shortages }}
+                </span>
+
+            </div>
+
+            <div class="mt-4 p-3 border rounded-3">
+
+                <div class="small text-secondary mb-1">
+                    Interpretation
+                </div>
+
+                {% if projected_gap > 0 %}
+
+                    <div class="fw-semibold">
+                        Demand is projected to remain above supply.
+                    </div>
+
+                    <div class="small text-secondary mt-1">
+                        Training capacity may need to expand in affected districts.
+                    </div>
+
+                {% elif projected_gap < 0 %}
+
+                    <div class="fw-semibold">
+                        Supply is projected to exceed demand.
+                    </div>
+
+                    <div class="small text-secondary mt-1">
+                        Planners may need to redirect training capacity.
+                    </div>
+
+                {% else %}
+
+                    <div class="fw-semibold">
+                        Demand and supply are broadly balanced.
+                    </div>
+
+                    <div class="small text-secondary mt-1">
+                        Continue monitoring the occupation.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Recommendations -->
+<div class="skilltek-card mb-4">
+
+    <div class="p-4 border-bottom">
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+                <h5 class="fw-bold mb-1">
+                    Planner Actions
+                </h5>
+
+                <p class="small text-secondary mb-0">
+                    Recommended interventions for {{ occupation.name }}.
+                </p>
+            </div>
+
+            <span class="material-symbols-outlined text-primary fs-2">
+                lightbulb
+            </span>
+
+        </div>
+
+    </div>
+
+    <div class="row g-0">
+
+        {% for recommendation in recommendations %}
+
+        <div class="col-12 col-lg-6 border-bottom">
+
+            <div class="p-4">
+
+                <div class="d-flex gap-3">
+
+                    <div class="text-primary">
+
+                        {% if recommendation.recommendation_type == "increase_training" %}
+
+                            <span class="material-symbols-outlined">
+                                trending_up
+                            </span>
+
+                        {% elif recommendation.recommendation_type == "decrease_training" %}
+
+                            <span class="material-symbols-outlined">
+                                trending_down
+                            </span>
+
+                        {% elif recommendation.recommendation_type == "redirect_capacity" %}
+
+                            <span class="material-symbols-outlined">
+                                swap_horiz
+                            </span>
+
+                        {% else %}
+
+                            <span class="material-symbols-outlined">
+                                school
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                    <div>
+
+                        <div class="fw-semibold mb-1">
+                            {{ recommendation.title }}
+                        </div>
+
+                        <div class="small text-secondary mb-2">
+                            {{ recommendation.district.name }},
+                            {{ recommendation.district.state.name }}
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-1">
+
+                            {% if recommendation.priority == "critical" %}
+
+                                <span class="badge bg-danger-subtle text-danger">
+                                    Critical
+                                </span>
+
+                            {% elif recommendation.priority == "high" %}
+
+                                <span class="badge bg-warning-subtle text-warning-emphasis">
+                                    High priority
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-secondary-subtle text-secondary">
+                                    {{ recommendation.priority|title }}
+                                </span>
+
+                            {% endif %}
+
+                            {% if recommendation.suggested_seats > 0 %}
+
+                                <span class="badge bg-light text-dark border">
+                                    +{{ recommendation.suggested_seats }} seats
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% empty %}
+
+        <div class="col-12">
+            <div class="text-center py-5 text-secondary">
+                No planner actions available.
+            </div>
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<!-- Intelligence pipeline -->
+<div class="skilltek-card p-4">
+
+    <div class="row align-items-center g-4">
+
+        <div class="col-lg-8">
+
+            <div class="small text-uppercase fw-semibold text-primary mb-2">
+                Occupation intelligence
+            </div>
+
+            <h5 class="fw-bold mb-2">
+                From demand signals to workforce intervention.
+            </h5>
+
+            <p class="text-secondary mb-0">
+                SkillTek combines forecast demand, workforce supply,
+                district-level gaps and training recommendations to
+                show how {{ occupation.name }} is expected to evolve
+                across the monitored labour market.
+            </p>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="border rounded-3 p-3">
+
+                <div class="small text-secondary mb-2">
+                    Intelligence chain
+                </div>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+
+                    <span class="badge bg-light text-dark border">
+                        Demand
+                    </span>
+
+                    <span class="text-secondary">
+                        →
+                    </span>
+
+                    <span class="badge bg-light text-dark border">
+                        Supply
+                    </span>
+
+                    <span class="text-secondary">
+                        →
+                    </span>
+
+                    <span class="badge bg-light text-dark border">
+                        Gap
+                    </span>
+
+                    <span class="text-secondary">
+                        →
+                    </span>
+
+                    <span class="badge bg-primary">
+                        Action
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+```
+
+</div>
+
+<script>
+const occupationForecastData = {{ forecast_json|safe }};
+
+function renderOccupationForecast() {
+    const container = document.getElementById(
+        "occupationForecastChart"
+    );
+
+    if (!container) {
+        return;
+    }
+
+    const labels = occupationForecastData.labels;
+    const demand = occupationForecastData.demand;
+    const supply = occupationForecastData.supply;
+
+    if (!labels.length) {
+        container.innerHTML =
+            '<div class="text-center py-5 text-secondary">No forecast data available.</div>';
+        return;
+    }
+
+    const width = Math.max(
+        container.clientWidth,
+        700
+    );
+
+    const height = 360;
+
+    const padding = {
+        top: 30,
+        right: 30,
+        bottom: 55,
+        left: 65
+    };
+
+    const chartWidth =
+        width -
+        padding.left -
+        padding.right;
+
+    const chartHeight =
+        height -
+        padding.top -
+        padding.bottom;
+
+    const allValues = demand.concat(supply);
+
+    const minValue = Math.min(...allValues);
+    const maxValue = Math.max(...allValues);
+
+    const range =
+        maxValue - minValue || 1;
+
+    const yMin =
+        Math.max(
+            0,
+            minValue - range * 0.1
+        );
+
+    const yMax =
+        maxValue + range * 0.1;
+
+    function x(index) {
+        if (labels.length === 1) {
+            return padding.left +
+                chartWidth / 2;
+        }
+
+        return padding.left +
+            (
+                index /
+                (labels.length - 1)
+            ) *
+            chartWidth;
+    }
+
+    function y(value) {
+        return padding.top +
+            (
+                1 -
+                (
+                    (value - yMin) /
+                    (yMax - yMin)
+                )
+            ) *
+            chartHeight;
+    }
+
+    function buildPath(values) {
+        return values.map(
+            (value, index) => {
+                const command =
+                    index === 0
+                        ? "M"
+                        : "L";
+
+                return `${command} ${x(index)} ${y(value)}`;
+            }
+        ).join(" ");
+    }
+
+    const gridLines = 5;
+
+    let svg = `
+        <svg
+            width="100%"
+            height="${height}"
+            viewBox="0 0 ${width} ${height}"
+            role="img"
+            aria-label="Occupation demand and supply forecast"
+        >
+    `;
+
+    for (
+        let i = 0;
+        i <= gridLines;
+        i++
+    ) {
+        const value =
+            yMin +
+            (
+                (yMax - yMin) *
+                i /
+                gridLines
+            );
+
+        const yPosition = y(value);
+
+        svg += `
+            <line
+                x1="${padding.left}"
+                y1="${yPosition}"
+                x2="${width - padding.right}"
+                y2="${yPosition}"
+                stroke="currentColor"
+                opacity="0.08"
+            />
+
+            <text
+                x="${padding.left - 10}"
+                y="${yPosition + 4}"
+                text-anchor="end"
+                font-size="11"
+                fill="currentColor"
+                opacity="0.55"
+            >
+                ${Math.round(value).toLocaleString()}
+            </text>
+        `;
+    }
+
+    labels.forEach(
+        (label, index) => {
+            const shouldShow =
+                labels.length <= 8 ||
+                index === 0 ||
+                index === labels.length - 1 ||
+                index % 2 === 0;
+
+            if (!shouldShow) {
+                return;
+            }
+
+            svg += `
+                <text
+                    x="${x(index)}"
+                    y="${height - 20}"
+                    text-anchor="middle"
+                    font-size="11"
+                    fill="currentColor"
+                    opacity="0.55"
+                >
+                    ${label}
+                </text>
+            `;
+        }
+    );
+
+    svg += `
+        <path
+            d="${buildPath(demand)}"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+        />
+
+        <path
+            d="${buildPath(supply)}"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-dasharray="7 6"
+            opacity="0.5"
+        />
+    `;
+
+    demand.forEach(
+        (value, index) => {
+            svg += `
+                <circle
+                    cx="${x(index)}"
+                    cy="${y(value)}"
+                    r="4"
+                    fill="currentColor"
+                >
+                    <title>
+                        ${labels[index]} — Demand: ${value.toLocaleString()}
+                    </title>
+                </circle>
+            `;
+        }
+    );
+
+    supply.forEach(
+        (value, index) => {
+            svg += `
+                <circle
+                    cx="${x(index)}"
+                    cy="${y(value)}"
+                    r="4"
+                    fill="currentColor"
+                    opacity="0.5"
+                >
+                    <title>
+                        ${labels[index]} — Supply: ${value.toLocaleString()}
+                    </title>
+                </circle>
+            `;
+        }
+    );
+
+    svg += `
+        <text
+            x="${padding.left}"
+            y="16"
+            font-size="12"
+            font-weight="600"
+            fill="currentColor"
+        >
+            Demand
+        </text>
+
+        <line
+            x1="${padding.left + 58}"
+            y1="12"
+            x2="${padding.left + 82}"
+            y2="12"
+            stroke="currentColor"
+            stroke-width="3"
+        />
+
+        <text
+            x="${padding.left + 95}"
+            y="16"
+            font-size="12"
+            font-weight="600"
+            fill="currentColor"
+            opacity="0.6"
+        >
+            Supply
+        </text>
+
+        <line
+            x1="${padding.left + 143}"
+            y1="12"
+            x2="${padding.left + 167}"
+            y2="12"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-dasharray="7 6"
+            opacity="0.5"
+        />
+
+        </svg>
+    `;
+
+    container.innerHTML = svg;
+}
+
+renderOccupationForecast();
+
+window.addEventListener(
+    "resize",
+    renderOccupationForecast
+);
+</script>
+
+{% endblock %}

@@ -1,0 +1,644 @@
+{% extends "base.html" %}
+
+{% block title %}{{ state.name }} Labour Intelligence | SkillTek{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-4 px-lg-5 py-4">
+
+<!-- Header -->
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+
+    <div>
+        <div class="small text-uppercase fw-semibold text-primary mb-2">
+            State Intelligence
+        </div>
+
+        <h1 class="display-6 fw-bold mb-2">
+            {{ state.name }}
+        </h1>
+
+        <p class="text-secondary mb-0">
+            Forecast-driven labour market intelligence across {{ total_districts }} districts.
+        </p>
+    </div>
+
+    <div class="text-lg-end">
+        <div class="small text-secondary">
+            Forecast horizon
+        </div>
+
+        {% if latest_forecast %}
+            <div class="fw-semibold">
+                Through {{ latest_forecast.forecast_month|date:"F Y" }}
+            </div>
+        {% else %}
+            <div class="fw-semibold">
+                No forecast data
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- State metrics -->
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-lg-3">
+        <div class="skilltek-card h-100 p-4">
+            <div class="small text-secondary mb-2">
+                State Skill Health
+            </div>
+
+            <div class="display-6 fw-bold">
+                {{ skill_health_score }}
+            </div>
+
+            <div class="small text-secondary mt-1">
+                Overall balance indicator
+            </div>
+
+            <div class="progress mt-3" style="height: 7px;">
+                <div
+                    class="progress-bar"
+                    style="width: {{ skill_health_score }}%;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="skilltek-card h-100 p-4">
+            <div class="small text-secondary mb-2">
+                Districts
+            </div>
+
+            <div class="display-6 fw-bold">
+                {{ total_districts }}
+            </div>
+
+            <div class="small text-secondary mt-1">
+                Local markets monitored
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="skilltek-card h-100 p-4">
+            <div class="small text-secondary mb-2">
+                Shortage Markets
+            </div>
+
+            <div class="display-6 fw-bold text-danger">
+                {{ shortage_markets }}
+            </div>
+
+            <div class="small text-secondary mt-1">
+                Demand above supply
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="skilltek-card h-100 p-4">
+            <div class="small text-secondary mb-2">
+                Oversupply Markets
+            </div>
+
+            <div class="display-6 fw-bold text-warning-emphasis">
+                {{ oversupply_markets }}
+            </div>
+
+            <div class="small text-secondary mt-1">
+                Supply above demand
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- District intelligence -->
+<div class="skilltek-card mb-4">
+
+    <div class="p-4 border-bottom">
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+                <h5 class="fw-bold mb-1">
+                    District Intelligence
+                </h5>
+
+                <p class="small text-secondary mb-0">
+                    Select a district to explore its occupation-level forecasts and interventions.
+                </p>
+            </div>
+
+            <span class="material-symbols-outlined text-primary fs-2">
+                location_on
+            </span>
+
+        </div>
+    </div>
+
+    <div class="table-responsive">
+
+        <table class="table align-middle mb-0">
+
+            <thead>
+                <tr>
+                    <th class="ps-4">
+                        District
+                    </th>
+                    <th>
+                        Markets
+                    </th>
+                    <th>
+                        Shortages
+                    </th>
+                    <th>
+                        Oversupply
+                    </th>
+                    <th>
+                        Highest risk
+                    </th>
+                    <th>
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for item in district_summary %}
+
+                <tr>
+
+                    <td class="ps-4">
+
+                        <a
+                            href="{% url 'district_detail' item.district.id %}"
+                            class="text-decoration-none"
+                        >
+                            <div class="fw-semibold text-primary">
+                                {{ item.district.name }}
+                            </div>
+
+                            <div class="small text-secondary">
+                                {{ state.name }}
+                            </div>
+                        </a>
+
+                    </td>
+
+                    <td>
+                        {{ item.markets }}
+                    </td>
+
+                    <td>
+                        <span class="fw-semibold text-danger">
+                            {{ item.shortages }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="fw-semibold text-warning-emphasis">
+                            {{ item.oversupply }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="fw-bold">
+                            {{ item.maximum_risk|floatformat:0 }}
+                        </span>
+                        <span class="small text-secondary">
+                            / 100
+                        </span>
+                    </td>
+
+                    <td class="text-end pe-4">
+
+                        <a
+                            href="{% url 'district_detail' item.district.id %}"
+                            class="btn btn-sm btn-outline-primary"
+                        >
+                            View intelligence
+                            <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td
+                        colspan="6"
+                        class="text-center py-5 text-secondary"
+                    >
+                        No district intelligence available.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- Highest-risk markets -->
+<div class="skilltek-card mb-4">
+
+    <div class="p-4 border-bottom">
+
+        <h5 class="fw-bold mb-1">
+            Highest-Risk Skill Markets
+        </h5>
+
+        <p class="small text-secondary mb-0">
+            Occupation and district combinations requiring the closest attention.
+        </p>
+
+    </div>
+
+    <div class="table-responsive">
+
+        <table class="table align-middle mb-0">
+
+            <thead>
+                <tr>
+                    <th class="ps-4">
+                        Occupation
+                    </th>
+                    <th>
+                        District
+                    </th>
+                    <th>
+                        Projected gap
+                    </th>
+                    <th>
+                        Trend
+                    </th>
+                    <th>
+                        Risk
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for item in highest_risk %}
+
+                <tr>
+
+                    <td class="ps-4">
+                        <div class="fw-semibold">
+                           <a href="{% url 'occupation_detail' item.occupation.id %}" class="text-decoration-none fw-semibold">
+                                {{ item.occupation.name }}
+                            </a>
+                        </div>
+
+                        <div class="small text-secondary">
+                            {{ item.occupation.sector.name }}
+                        </div>
+                    </td>
+
+                    <td>
+                        <a
+                            href="{% url 'district_detail' item.district.id %}"
+                            class="text-decoration-none"
+                        >
+                            <div class="fw-semibold text-primary">
+                                {{ item.district.name }}
+                            </div>
+
+                            <div class="small text-secondary">
+                                {{ state.name }}
+                            </div>
+                        </a>
+                    </td>
+
+                    <td>
+
+                        {% if item.last_gap > 0 %}
+
+                            <span class="fw-semibold text-danger">
+                                +{{ item.last_gap|floatformat:0 }}
+                            </span>
+
+                            <div class="small text-secondary">
+                                shortage
+                            </div>
+
+                        {% elif item.last_gap < 0 %}
+
+                            <span class="fw-semibold text-warning-emphasis">
+                                {{ item.last_gap|floatformat:0 }}
+                            </span>
+
+                            <div class="small text-secondary">
+                                oversupply
+                            </div>
+
+                        {% else %}
+
+                            <span class="fw-semibold">
+                                Balanced
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {% if item.trend == "worsening" %}
+
+                            <span class="badge bg-danger-subtle text-danger">
+                                <span
+                                    class="material-symbols-outlined align-middle"
+                                    style="font-size:15px;"
+                                >
+                                    trending_up
+                                </span>
+                                Worsening
+                            </span>
+
+                        {% elif item.trend == "improving" %}
+
+                            <span class="badge bg-success-subtle text-success">
+                                <span
+                                    class="material-symbols-outlined align-middle"
+                                    style="font-size:15px;"
+                                >
+                                    trending_down
+                                </span>
+                                Improving
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge bg-secondary-subtle text-secondary">
+                                Stable
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        <div class="fw-bold">
+                            {{ item.maximum_risk|floatformat:0 }}
+                        </div>
+
+                        <div class="small text-secondary">
+                            / 100
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td
+                        colspan="5"
+                        class="text-center py-5 text-secondary"
+                    >
+                        No high-risk markets available.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- Planner actions -->
+<div class="skilltek-card mb-4">
+
+    <div class="p-4 border-bottom">
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+                <h5 class="fw-bold mb-1">
+                    State Planner Actions
+                </h5>
+
+                <p class="small text-secondary mb-0">
+                    Recommended interventions generated from forecast signals.
+                </p>
+            </div>
+
+            <span class="material-symbols-outlined text-primary fs-2">
+                lightbulb
+            </span>
+
+        </div>
+
+    </div>
+
+    <div class="row g-0">
+
+        {% for recommendation in top_recommendations %}
+
+        <div class="col-12 col-lg-6 border-bottom">
+
+            <div class="p-4">
+
+                <div class="d-flex gap-3">
+
+                    <div class="text-primary">
+
+                        {% if recommendation.recommendation_type == "increase_training" %}
+
+                            <span class="material-symbols-outlined">
+                                trending_up
+                            </span>
+
+                        {% elif recommendation.recommendation_type == "decrease_training" %}
+
+                            <span class="material-symbols-outlined">
+                                trending_down
+                            </span>
+
+                        {% elif recommendation.recommendation_type == "redirect_capacity" %}
+
+                            <span class="material-symbols-outlined">
+                                swap_horiz
+                            </span>
+
+                        {% else %}
+
+                            <span class="material-symbols-outlined">
+                                school
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                    <div class="flex-grow-1">
+
+                        <div class="fw-semibold mb-1">
+                            {{ recommendation.title }}
+                        </div>
+
+                        <div class="small text-secondary mb-2">
+
+                            <a
+                                href="{% url 'district_detail' recommendation.district.id %}"
+                                class="text-decoration-none"
+                            >
+                                {{ recommendation.district.name }}
+                            </a>
+
+                            ·
+
+                            <a href="{% url 'occupation_detail' recommendation.occupation.id %}"
+                                class="text-decoration-none">
+                                {{ recommendation.occupation.name }}
+                            </a>
+
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-1">
+
+                            {% if recommendation.priority == "critical" %}
+
+                                <span class="badge bg-danger-subtle text-danger">
+                                    Critical
+                                </span>
+
+                            {% elif recommendation.priority == "high" %}
+
+                                <span class="badge bg-warning-subtle text-warning-emphasis">
+                                    High priority
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-secondary-subtle text-secondary">
+                                    {{ recommendation.priority|title }}
+                                </span>
+
+                            {% endif %}
+
+                            {% if recommendation.suggested_seats > 0 %}
+
+                                <span class="badge bg-light text-dark border">
+                                    +{{ recommendation.suggested_seats }} seats
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% empty %}
+
+        <div class="col-12">
+            <div class="text-center py-5 text-secondary">
+                No planner actions available.
+            </div>
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<!-- Pipeline -->
+<div class="skilltek-card p-4">
+
+    <div class="row align-items-center g-4">
+
+        <div class="col-lg-8">
+
+            <div class="small text-uppercase fw-semibold text-primary mb-2">
+                Decision intelligence
+            </div>
+
+            <h5 class="fw-bold mb-2">
+                From state-level signals to district action.
+            </h5>
+
+            <p class="text-secondary mb-0">
+                SkillTek aggregates labour-market forecasts across
+                {{ state.name }} to identify where future skill shortages
+                and oversupply may emerge, then routes planners directly
+                into district-level intelligence.
+            </p>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="border rounded-3 p-3">
+
+                <div class="small text-secondary mb-2">
+                    Intelligence hierarchy
+                </div>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+
+                    <span class="badge bg-primary">
+                        {{ state.name }}
+                    </span>
+
+                    <span class="text-secondary">
+                        →
+                    </span>
+
+                    <span class="badge bg-light text-dark border">
+                        District
+                    </span>
+
+                    <span class="text-secondary">
+                        →
+                    </span>
+
+                    <span class="badge bg-light text-dark border">
+                        Occupation
+                    </span>
+
+                    <span class="text-secondary">
+                        →
+                    </span>
+
+                    <span class="badge bg-light text-dark border">
+                        Action
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+{% endblock %}

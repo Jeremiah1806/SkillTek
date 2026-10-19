@@ -1,0 +1,767 @@
+{% extends "base.html" %}
+
+{% block title %}Policy Simulator | SkillTek{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-4 px-lg-5 py-4">
+
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+        <div>
+            <div class="small text-uppercase fw-semibold text-primary mb-2">
+                Decision Support
+            </div>
+            <h1 class="display-6 fw-bold mb-2">Policy Simulator</h1>
+            <p class="text-secondary mb-0">
+                Test how training-capacity interventions could change projected labour-market gaps.
+            </p>
+        </div>
+
+        <div class="text-lg-end">
+            <div class="small text-secondary">Simulation model</div>
+            <div class="fw-semibold">Training-to-workforce impact</div>
+        </div>
+    </div>
+
+    <div class="skilltek-card p-4 mb-4">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <div class="d-flex gap-3">
+                    <div class="text-primary">
+                        <span class="material-symbols-outlined fs-1">model_training</span>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-2">What-if policy analysis</h5>
+                        <p class="text-secondary mb-0">
+                            Select a labour market and test a proposed training-seat capacity.
+                            SkillTek estimates how the intervention could affect projected supply
+                            and the remaining skill gap.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="border rounded-3 p-3">
+                    <div class="small text-secondary mb-1">Impact assumption</div>
+                    <div class="fw-bold">70%</div>
+                    <div class="small text-secondary">
+                        of additional seats contribute to projected workforce supply.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+
+        <!-- Intervention -->
+        <div class="col-lg-5">
+            <div class="skilltek-card h-100">
+
+                <div class="p-4 border-bottom">
+                    <h5 class="fw-bold mb-1">Define intervention</h5>
+                    <p class="small text-secondary mb-0">
+                        Choose the market and proposed training capacity.
+                    </p>
+                </div>
+
+                <form method="post" class="p-4">
+                    {% csrf_token %}
+
+                    <!-- State -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">State</label>
+
+                        <select
+                            name="state"
+                            id="stateSelect"
+                            class="form-select"
+                            required
+                        >
+                            <option value="">Select state</option>
+
+                            {% for state in states %}
+                                <option
+                                    value="{{ state.id }}"
+                                    {% if selected_state and selected_state.id == state.id %}selected{% endif %}
+                                >
+                                    {{ state.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- District -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">District</label>
+
+                        <select
+                            name="district"
+                            id="districtSelect"
+                            class="form-select"
+                            required
+                        >
+                            <option value="">Select district</option>
+
+                            {% for state in states %}
+                                {% for district in state.districts.all %}
+                                    <option
+                                        value="{{ district.id }}"
+                                        data-state="{{ state.id }}"
+                                        {% if selected_district and selected_district.id == district.id %}selected{% endif %}
+                                    >
+                                        {{ district.name }}
+                                    </option>
+                                {% endfor %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Occupation -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Occupation</label>
+
+                        <select
+                            name="occupation"
+                            id="occupationSelect"
+                            class="form-select"
+                            required
+                        >
+                            <option value="">Select occupation</option>
+
+                            {% for occupation in occupations %}
+                                <option
+                                    value="{{ occupation.id }}"
+                                    {% if selected_occupation and selected_occupation.id == occupation.id %}selected{% endif %}
+                                >
+                                    {{ occupation.name }} — {{ occupation.sector.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Proposed seats -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            Proposed total training seats
+                        </label>
+
+                        <input
+                            type="number"
+                            name="proposed_seats"
+                            class="form-control"
+                            min="0"
+                            step="1"
+                            value="{{ proposed_seats }}"
+                            placeholder="Example: 1500"
+                            required
+                        >
+
+                        <div class="form-text">
+                            Enter the total number of seats after the proposed intervention.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-play-circle me-2"></i>
+                        Run Simulation
+                    </button>
+
+                </form>
+
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="col-lg-7">
+            <div class="skilltek-card h-100">
+
+                <div class="p-4 border-bottom">
+                    <h5 class="fw-bold mb-1">Simulation Result</h5>
+                    <p class="small text-secondary mb-0">
+                        Projected effect of the proposed intervention.
+                    </p>
+                </div>
+
+                {% if result %}
+
+                    <div class="p-4">
+
+                        <!-- Outcome -->
+                        <div class="border rounded-3 p-4 mb-4">
+
+                            <div class="small text-uppercase fw-semibold text-primary mb-2">
+                                Projected outcome
+                            </div>
+
+                            <h4 class="fw-bold mb-2">
+                                {% if result.outcome == "balanced" %}
+                                    Market reaches balance
+                                {% elif result.outcome == "shortage_reduced" %}
+                                    Shortage reduced
+                                {% elif result.outcome == "shortage_eliminated_oversupply" %}
+                                    Shortage eliminated — oversupply introduced
+                                {% elif result.outcome == "oversupply_reduced" %}
+                                    Oversupply reduced
+                                {% elif result.outcome == "oversupply_eliminated_shortage" %}
+                                    Oversupply eliminated — shortage introduced
+                                {% elif result.outcome == "shortage" %}
+                                    Shortage remains
+                                {% else %}
+                                    Oversupply remains
+                                {% endif %}
+                            </h4>
+
+                            <p class="text-secondary mb-0">
+
+                                {% if result.outcome == "shortage_reduced" %}
+                                    The proposed intervention reduces the projected labour shortage,
+                                    but additional capacity is still required to reach balance.
+
+                                {% elif result.outcome == "shortage_eliminated_oversupply" %}
+                                    The proposed intervention eliminates the projected shortage,
+                                    but the simulated workforce exceeds projected demand.
+                                    A smaller intervention may produce a better balance.
+
+                                {% elif result.outcome == "balanced" %}
+                                    The simulated intervention brings projected supply and demand
+                                    into balance.
+
+                                {% elif result.outcome == "oversupply_reduced" %}
+                                    The proposed intervention reduces the projected oversupply,
+                                    moving the market closer to balance.
+
+                                {% elif result.outcome == "oversupply_eliminated_shortage" %}
+                                    The proposed intervention eliminates the projected oversupply,
+                                    but the simulated market moves into shortage.
+
+                                {% elif result.outcome == "shortage" %}
+                                    The intervention improves projected supply,
+                                    but a shortage remains.
+
+                                {% else %}
+                                    The intervention does not eliminate the projected oversupply.
+                                {% endif %}
+
+                            </p>
+
+                        </div>
+
+                        <!-- Metrics -->
+                        <div class="row g-3 mb-4">
+
+                            <div class="col-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="small text-secondary mb-2">
+                                        Current supply
+                                    </div>
+                                    <div class="h3 fw-bold mb-0">
+                                        {{ result.current_projected_supply|floatformat:0 }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="small text-secondary mb-2">
+                                        Simulated supply
+                                    </div>
+                                    <div class="h3 fw-bold text-primary mb-0">
+                                        {{ result.simulated_projected_supply|floatformat:0 }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="small text-secondary mb-2">
+                                        Current gap
+                                    </div>
+
+                                    <div class="h3 fw-bold mb-0
+                                        {% if result.current_gap > 0 %}
+                                            text-danger
+                                        {% elif result.current_gap < 0 %}
+                                            text-warning-emphasis
+                                        {% else %}
+                                            text-success
+                                        {% endif %}
+                                    ">
+                                        {% if result.current_gap > 0 %}
+                                            +{{ result.current_gap|floatformat:0 }}
+                                        {% else %}
+                                            {{ result.current_gap|floatformat:0 }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="small text-secondary mb-2">
+                                        Simulated gap
+                                    </div>
+
+                                    <div class="h3 fw-bold mb-0
+                                        {% if result.simulated_gap > 0 %}
+                                            text-danger
+                                        {% elif result.simulated_gap < 0 %}
+                                            text-warning-emphasis
+                                        {% else %}
+                                            text-success
+                                        {% endif %}
+                                    ">
+                                        {% if result.simulated_gap > 0 %}
+                                            +{{ result.simulated_gap|floatformat:0 }}
+                                        {% else %}
+                                            {{ result.simulated_gap|floatformat:0 }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Impact -->
+                        <div class="border rounded-3 p-4 mb-4">
+
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                                <div>
+                                    <div class="small text-secondary">
+                                        Gap reduction
+                                    </div>
+                                    <div class="h3 fw-bold mb-0">
+                                        {{ result.gap_reduction|floatformat:0 }}
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    <div class="small text-secondary">
+                                        Improvement
+                                    </div>
+                                    <div class="h3 fw-bold text-success mb-0">
+                                        {{ result.improvement_percentage|floatformat:1 }}%
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="progress" style="height:9px;">
+                                <div
+                                    class="progress-bar"
+                                    style="width:
+                                        {% if result.improvement_percentage > 100 %}
+                                            100
+                                        {% elif result.improvement_percentage < 0 %}
+                                            0
+                                        {% else %}
+                                            {{ result.improvement_percentage }}
+                                        {% endif %}%;">
+                                </div>
+                            </div>
+
+                            <div class="small text-secondary mt-3">
+                                {{ result.additional_seats }} additional seats ×
+                                70%
+                                estimated workforce conversion.
+                            </div>
+
+                        </div>
+
+                        <!-- Recommendation -->
+                        <div class="border rounded-3 p-4 mb-4">
+
+                            <div class="d-flex gap-3">
+
+                                <div class="text-primary">
+                                    <span class="material-symbols-outlined fs-2">
+                                        auto_awesome
+                                    </span>
+                                </div>
+
+                                <div class="flex-grow-1">
+
+                                    <div class="small text-uppercase fw-semibold text-primary mb-1">
+                                        SkillTek recommendation
+                                    </div>
+
+                                    <h5 class="fw-bold mb-2">
+                                        Recommended intervention
+                                    </h5>
+
+                                    <p class="text-secondary small mb-4">
+                                        Based on projected demand, current supply and the
+                                        70% pilot conversion
+                                        assumption, SkillTek estimates the approximate additional
+                                        capacity required to close the projected gap.
+                                    </p>
+
+                                    <div class="row g-3">
+
+                                        <div class="col-md-4">
+                                            <div class="bg-light rounded-3 p-3 h-100">
+                                                <div class="small text-secondary mb-1">
+                                                    Additional seats
+                                                </div>
+                                                <div class="h4 fw-bold mb-0">
+                                                    +{{ result.recommended_additional_seats }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <div class="bg-light rounded-3 p-3 h-100">
+                                                <div class="small text-secondary mb-1">
+                                                    Recommended total
+                                                </div>
+                                                <div class="h4 fw-bold mb-0">
+                                                    {{ result.recommended_total_seats }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <div class="bg-light rounded-3 p-3 h-100">
+                                                <div class="small text-secondary mb-1">
+                                                    Estimated gap
+                                                </div>
+
+                                                <div class="h4 fw-bold mb-0
+                                                    {% if result.recommended_gap > 0 %}
+                                                        text-danger
+                                                    {% elif result.recommended_gap < 0 %}
+                                                        text-warning-emphasis
+                                                    {% else %}
+                                                        text-success
+                                                    {% endif %}
+                                                ">
+                                                    {% if result.recommended_gap > 0 %}
+                                                        +{{ result.recommended_gap|floatformat:0 }}
+                                                    {% else %}
+                                                        {{ result.recommended_gap|floatformat:0 }}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="small text-secondary mt-3">
+                                        Estimated projected supply after recommendation:
+                                        <strong>
+                                            {{ result.recommended_projected_supply|floatformat:0 }}
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- Before / After -->
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+
+                                    <div class="small text-uppercase fw-semibold text-secondary mb-3">
+                                        Current market
+                                    </div>
+
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-secondary">
+                                            Projected demand
+                                        </span>
+                                        <span class="fw-semibold">
+                                            {{ result.projected_demand|floatformat:0 }}
+                                        </span>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-secondary">
+                                            Projected supply
+                                        </span>
+                                        <span class="fw-semibold">
+                                            {{ result.current_projected_supply|floatformat:0 }}
+                                        </span>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+
+                                    <div class="small text-uppercase fw-semibold text-secondary mb-3">
+                                        Simulated market
+                                    </div>
+
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-secondary">
+                                            Projected demand
+                                        </span>
+                                        <span class="fw-semibold">
+                                            {{ result.projected_demand|floatformat:0 }}
+                                        </span>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-secondary">
+                                            Projected supply
+                                        </span>
+                                        <span class="fw-semibold">
+                                            {{ result.simulated_projected_supply|floatformat:0 }}
+                                        </span>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="p-5 text-center">
+
+                        <span
+                            class="material-symbols-outlined text-secondary mb-3"
+                            style="font-size:48px;"
+                        >
+                            analytics
+                        </span>
+
+                        <h5 class="fw-bold">No simulation yet</h5>
+
+                        <p class="text-secondary mb-0">
+                            Select a market, enter a proposed training capacity,
+                            and run the simulation to see the projected impact.
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Recent simulations -->
+    <div class="skilltek-card mb-4">
+
+        <div class="p-4 border-bottom">
+            <h5 class="fw-bold mb-1">Recent Simulations</h5>
+            <p class="small text-secondary mb-0">
+                Your latest policy intervention scenarios.
+            </p>
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table align-middle mb-0">
+
+                <thead>
+                    <tr>
+                        <th class="ps-4">Market</th>
+                        <th>Current seats</th>
+                        <th>Proposed seats</th>
+                        <th>Gap reduction</th>
+                        <th>Improvement</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for simulation in recent_simulations %}
+
+                        <tr>
+
+                            <td class="ps-4">
+                                <div class="fw-semibold">
+                                    {{ simulation.occupation.name }}
+                                </div>
+
+                                <div class="small text-secondary">
+                                    {{ simulation.district.name }},
+                                    {{ simulation.district.state.name }}
+                                </div>
+                            </td>
+
+                            <td>
+                                {{ simulation.current_training_seats }}
+                            </td>
+
+                            <td>
+                                {{ simulation.proposed_training_seats }}
+                            </td>
+
+                            <td>
+                                {{ simulation.gap_reduction|floatformat:0 }}
+                            </td>
+
+                            <td>
+                                <span class="fw-semibold text-success">
+                                    {{ simulation.improvement_percentage|floatformat:1 }}%
+                                </span>
+                            </td>
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-secondary">
+                                No simulations have been run yet.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+    <!-- Methodology -->
+    <div class="skilltek-card p-4">
+
+        <div class="row g-4 align-items-center">
+
+            <div class="col-lg-8">
+
+                <div class="small text-uppercase fw-semibold text-primary mb-2">
+                    Methodology
+                </div>
+
+                <h5 class="fw-bold mb-2">
+                    Transparent intervention modelling
+                </h5>
+
+                <p class="text-secondary mb-0">
+                    The simulator does not assume that every training seat becomes
+                    an available worker. Instead, it applies a configurable conversion
+                    factor to estimate the portion of additional seats that contributes
+                    to projected workforce supply. This assumption can be replaced or
+                    calibrated as real programme outcome data becomes available.
+                </p>
+
+            </div>
+
+            <div class="col-lg-4">
+
+                <div class="border rounded-3 p-3">
+
+                    <div class="small text-secondary mb-2">
+                        Current pilot assumption
+                    </div>
+
+                    <div class="display-6 fw-bold">70%</div>
+
+                    <div class="small text-secondary">
+                        training-seat to projected-supply conversion
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const stateSelect = document.getElementById("stateSelect");
+    const districtSelect = document.getElementById("districtSelect");
+    const occupationSelect = document.getElementById("occupationSelect");
+
+    if (!stateSelect || !districtSelect || !occupationSelect) {
+        return;
+    }
+
+    const initialStateId = "{{ selected_state.id|default:'' }}";
+    const initialDistrictId = "{{ selected_district.id|default:'' }}";
+    const initialOccupationId = "{{ selected_occupation.id|default:'' }}";
+
+    function filterDistricts(clearInvalid = true) {
+
+        const stateId = stateSelect.value;
+
+        const options = districtSelect.querySelectorAll(
+            "option[data-state]"
+        );
+
+        options.forEach(function (option) {
+
+            const belongsToState =
+                option.dataset.state === stateId;
+
+            option.hidden = !belongsToState;
+            option.disabled = !belongsToState;
+
+        });
+
+        if (!stateId) {
+            districtSelect.value = "";
+            return;
+        }
+
+        const currentOption =
+            districtSelect.options[districtSelect.selectedIndex];
+
+        if (
+            clearInvalid &&
+            currentOption &&
+            currentOption.dataset.state &&
+            currentOption.dataset.state !== stateId
+        ) {
+            districtSelect.value = "";
+        }
+    }
+
+    /*
+     * Restore selections supplied by Django.
+     */
+    if (initialStateId) {
+        stateSelect.value = initialStateId;
+    }
+
+    if (initialOccupationId) {
+        occupationSelect.value = initialOccupationId;
+    }
+
+    /*
+     * Filter districts without destroying the selected district.
+     */
+    filterDistricts(false);
+
+    if (initialDistrictId) {
+        districtSelect.value = initialDistrictId;
+    }
+
+    /*
+     * When the user changes state,
+     * reset district and show only matching districts.
+     */
+    stateSelect.addEventListener("change", function () {
+
+        districtSelect.value = "";
+
+        filterDistricts(true);
+
+    });
+
+});
+</script>
+
+{% endblock %}

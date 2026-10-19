@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}SkillTek India | Labour Market Intelligence{% endblock %}
+
+{% block content %}
+
+<section class="container-fluid px-4 px-lg-5 py-5">
+
+    <div class="row align-items-center g-5 py-lg-5">
+
+        <div class="col-lg-7">
+
+            <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill bg-primary-subtle text-primary small fw-semibold mb-4">
+                <i class="bi bi-stars"></i>
+                AI-powered Labour Market Intelligence
+            </div>
+
+            <h1 class="display-4 fw-bold lh-sm mb-4">
+                Know where India's
+                <span class="text-primary">skills are heading.</span>
+            </h1>
+
+            <p class="lead text-secondary mb-4" style="max-width: 680px;">
+                SkillTek India combines labour-market demand, training capacity
+                and AI forecasting to identify emerging skill shortages and
+                oversupply before they become workforce problems.
+            </p>
+
+            <div class="d-flex flex-wrap gap-3">
+
+                {% if user.is_authenticated %}
+
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg px-4">
+                        Open Dashboard
+                        <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
+
+                {% else %}
+
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-4">
+                        Get Started
+                        <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
+
+                    <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-lg px-4">
+                        Sign In
+                    </a>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <div class="col-lg-5">
+
+            <div class="skilltek-card p-4">
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <div class="text-secondary small">Labour Market Signal</div>
+                        <h5 class="mb-0 mt-1">Skill Gap Overview</h5>
+                    </div>
+
+                    <span class="badge text-bg-success rounded-pill">
+                        <i class="bi bi-arrow-up-right"></i>
+                        Live
+                    </span>
+                </div>
+
+                <div class="row g-3">
+
+                    <div class="col-6">
+                        <div class="border rounded-3 p-3">
+                            <div class="text-secondary small mb-2">
+                                Demand
+                            </div>
+                            <div class="fs-3 fw-bold">
+                                —
+                            </div>
+                            <div class="text-secondary small">
+                                Awaiting data
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="border rounded-3 p-3">
+                            <div class="text-secondary small mb-2">
+                                Supply
+                            </div>
+                            <div class="fs-3 fw-bold">
+                                —
+                            </div>
+                            <div class="text-secondary small">
+                                Awaiting data
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="border rounded-3 p-3 bg-light">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="small fw-semibold">
+                                    Forecast engine
+                                </span>
+                                <i class="bi bi-cpu text-primary"></i>
+                            </div>
+
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar" style="width: 35%;"></div>
+                            </div>
+
+                            <div class="text-secondary small mt-2">
+                                Intelligence layer under development
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="row g-4 mt-5 pt-4">
+
+        <div class="col-md-4">
+            <div class="skilltek-card h-100 p-4">
+                <i class="bi bi-bar-chart-line fs-3 text-primary"></i>
+                <h5 class="mt-4">Understand Demand</h5>
+                <p class="text-secondary mb-0">
+                    Combine employment signals and hiring trends to understand
+                    where skills are being demanded.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="skilltek-card h-100 p-4">
+                <i class="bi bi-cpu fs-3 text-primary"></i>
+                <h5 class="mt-4">Forecast the Future</h5>
+                <p class="text-secondary mb-0">
+                    Use machine learning to identify where shortages and
+                    oversupply are likely to emerge.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="skilltek-card h-100 p-4">
+                <i class="bi bi-lightbulb fs-3 text-primary"></i>
+                <h5 class="mt-4">Take Action</h5>
+                <p class="text-secondary mb-0">
+                    Turn labour-market intelligence into practical training
+                    and capacity-planning recommendations.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

@@ -1,0 +1,483 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Labour Market Alerts · SkillTek India{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-3 px-lg-4 py-4">
+
+<!-- Header -->
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+    <div>
+        <div class="text-uppercase small fw-semibold text-primary mb-1">
+            Decision Support · Early Warning System
+        </div>
+        <h1 class="h3 fw-bold mb-1">Labour Market Alerts</h1>
+        <p class="text-muted mb-0">
+            Monitor forecast-driven signals for shortages, oversupply, rapid demand growth and high-risk labour markets.
+        </p>
+    </div>
+
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>
+        Back to dashboard
+    </a>
+</div>
+
+<!-- Summary -->
+<div class="row g-3 mb-4">
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="border rounded-3 bg-white p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="small text-muted mb-1">Active signals</div>
+                    <div class="fs-3 fw-bold">{{ total_alerts }}</div>
+                </div>
+                <span class="material-symbols-outlined text-primary">monitoring</span>
+            </div>
+            <div class="small text-muted mt-2">
+                Prioritised district-occupation markets
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="border rounded-3 bg-white p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="small text-muted mb-1">Critical alerts</div>
+                    <div class="fs-3 fw-bold">{{ critical_count }}</div>
+                </div>
+                <span class="material-symbols-outlined text-danger">priority_high</span>
+            </div>
+            <div class="small text-muted mt-2">
+                Immediate attention recommended
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="border rounded-3 bg-white p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="small text-muted mb-1">High-severity alerts</div>
+                    <div class="fs-3 fw-bold">{{ high_count }}</div>
+                </div>
+                <span class="material-symbols-outlined text-warning">warning</span>
+            </div>
+            <div class="small text-muted mt-2">
+                Markets requiring review
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="border rounded-3 bg-white p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="small text-muted mb-1">Shortage signals</div>
+                    <div class="fs-3 fw-bold">{{ shortage_count }}</div>
+                </div>
+                <span class="material-symbols-outlined text-danger">trending_up</span>
+            </div>
+            <div class="small text-muted mt-2">
+                Projected demand above supply
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Secondary signal breakdown -->
+<div class="border rounded-3 bg-white px-3 py-2 mb-4">
+    <div class="row g-0 align-items-center">
+
+        <div class="col-6 col-md-3 py-2 border-end">
+            <div class="px-3">
+                <div class="small text-muted">Oversupply</div>
+                <div class="fw-bold">{{ oversupply_count }}</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 py-2 border-end">
+            <div class="px-3">
+                <div class="small text-muted">Emerging skills</div>
+                <div class="fw-bold">{{ emerging_count }}</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 py-2 border-end">
+            <div class="px-3">
+                <div class="small text-muted">Rapid growth</div>
+                <div class="fw-bold">{{ rapid_growth_count }}</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 py-2">
+            <div class="px-3">
+                <div class="small text-muted">Markets reviewed</div>
+                <div class="fw-bold">{{ total_alerts }}</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="border rounded-3 bg-white p-3 mb-4">
+
+    <form method="get">
+
+        <div class="row g-3">
+
+            <div class="col-12 col-lg-5">
+                <label class="form-label small fw-semibold">
+                    Search market
+                </label>
+
+                <div class="input-group">
+                    <span class="input-group-text bg-white">
+                        <i class="bi bi-search"></i>
+                    </span>
+
+                    <input
+                        type="text"
+                        name="search"
+                        value="{{ search_query }}"
+                        class="form-control"
+                        placeholder="Search district or occupation..."
+                    >
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-4 col-lg-2">
+                <label class="form-label small fw-semibold">
+                    Severity
+                </label>
+
+                <select name="severity" class="form-select">
+                    <option value="">All severities</option>
+                    <option value="critical" {% if selected_severity == "critical" %}selected{% endif %}>
+                        Critical
+                    </option>
+                    <option value="high" {% if selected_severity == "high" %}selected{% endif %}>
+                        High
+                    </option>
+                    <option value="medium" {% if selected_severity == "medium" %}selected{% endif %}>
+                        Medium
+                    </option>
+                    <option value="low" {% if selected_severity == "low" %}selected{% endif %}>
+                        Low
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-12 col-sm-4 col-lg-3">
+                <label class="form-label small fw-semibold">
+                    Signal type
+                </label>
+
+                <select name="type" class="form-select">
+                    <option value="">All signals</option>
+                    <option value="shortage" {% if selected_type == "shortage" %}selected{% endif %}>
+                        Shortage
+                    </option>
+                    <option value="oversupply" {% if selected_type == "oversupply" %}selected{% endif %}>
+                        Oversupply
+                    </option>
+                    <option value="emerging" {% if selected_type == "emerging" %}selected{% endif %}>
+                        Emerging Skill
+                    </option>
+                    <option value="rapid_growth" {% if selected_type == "rapid_growth" %}selected{% endif %}>
+                        Rapid Growth
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-12 col-sm-4 col-lg-2">
+                <label class="form-label small fw-semibold">
+                    Status
+                </label>
+
+                <select name="status" class="form-select">
+                    <option value="active" {% if selected_status == "active" %}selected{% endif %}>
+                        Active
+                    </option>
+                    <option value="resolved" {% if selected_status == "resolved" %}selected{% endif %}>
+                        Resolved
+                    </option>
+                    <option value="all" {% if selected_status == "all" %}selected{% endif %}>
+                        All
+                    </option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-funnel me-1"></i>
+                Apply filters
+            </button>
+
+            <a href="{% url 'alerts' %}" class="btn btn-light border">
+                Reset
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+<!-- Results heading -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-3">
+
+    <div>
+
+        <h2 class="h5 fw-bold mb-1">
+
+            {% if selected_status == "resolved" %}
+                Resolved labour-market signals
+            {% elif selected_status == "all" %}
+                Labour-market signals
+            {% else %}
+                Active labour-market signals
+            {% endif %}
+
+        </h2>
+
+        <p class="small text-muted mb-0">
+            Forecast-driven signals ranked by severity and market risk.
+        </p>
+
+    </div>
+
+    <div class="small text-muted">
+        Showing <strong>{{ showing_count }}</strong>
+        prioritised signal{{ showing_count|pluralize }}
+
+        {% if total_alerts %}
+            from <strong>{{ total_alerts }}</strong> active market signals
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- Alert list -->
+{% if alerts %}
+
+    <div class="d-flex flex-column gap-3">
+
+        {% for alert in alerts %}
+
+            <div class="border rounded-3 bg-white overflow-hidden">
+
+                <div class="p-3 p-lg-4">
+
+                    <div class="row g-3 align-items-start">
+
+                        <!-- Alert details -->
+                        <div class="col-12 col-lg-9">
+
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+
+                                {% if alert.severity == "critical" %}
+                                    <span class="badge text-bg-danger">
+                                        Critical
+                                    </span>
+                                {% elif alert.severity == "high" %}
+                                    <span class="badge text-bg-warning">
+                                        High
+                                    </span>
+                                {% elif alert.severity == "medium" %}
+                                    <span class="badge text-bg-primary">
+                                        Medium
+                                    </span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">
+                                        Low
+                                    </span>
+                                {% endif %}
+
+                                <span class="badge bg-light text-dark border">
+                                    {{ alert.get_alert_type_display }}
+                                </span>
+
+                                {% if alert.is_resolved %}
+                                    <span class="badge bg-light text-success border">
+                                        Resolved
+                                    </span>
+                                {% endif %}
+
+                            </div>
+
+                            <h3 class="h6 fw-bold mb-2">
+                                {{ alert.title }}
+                            </h3>
+
+                            <p class="small text-muted mb-3" style="line-height:1.65;">
+                                {{ alert.message }}
+                            </p>
+
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+
+                                <span class="badge bg-light text-dark border">
+                                    <i class="bi bi-geo-alt me-1"></i>
+                                    {{ alert.district.name }}, {{ alert.district.state.name }}
+                                </span>
+
+                                <span class="badge bg-light text-dark border">
+                                    <i class="bi bi-briefcase me-1"></i>
+                                    {{ alert.occupation.name }}
+                                </span>
+
+                                <span class="badge bg-light text-dark border">
+                                    <i class="bi bi-diagram-3 me-1"></i>
+                                    {{ alert.occupation.sector.name }}
+                                </span>
+
+                                {% if alert.forecast %}
+                                    <span class="badge bg-light text-dark border">
+                                        <i class="bi bi-calendar3 me-1"></i>
+                                        Forecast:
+                                        {{ alert.forecast.forecast_month|date:"M Y" }}
+                                    </span>
+                                {% endif %}
+
+                            </div>
+
+                            <!-- Alert actions -->
+                            <div class="d-flex flex-wrap gap-2">
+
+                                <a
+                                    href="{% url 'district_detail' alert.district.id %}"
+                                    class="btn btn-sm btn-outline-secondary"
+                                >
+                                    <i class="bi bi-geo-alt me-1"></i>
+                                    District intelligence
+                                </a>
+
+                                <a
+                                    href="{% url 'occupation_detail' alert.occupation.id %}"
+                                    class="btn btn-sm btn-outline-secondary"
+                                >
+                                    <i class="bi bi-bar-chart-line me-1"></i>
+                                    Occupation
+                                </a>
+
+                                <a
+                                    href="{% url 'policy_simulator' %}?state={{ alert.district.state.id }}&district={{ alert.district.id }}&occupation={{ alert.occupation.id }}"
+                                    class="btn btn-sm btn-primary"
+                                >
+                                    <i class="bi bi-sliders me-1"></i>
+                                    Test intervention
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                        <!-- Risk score -->
+                        <div class="col-12 col-lg-3">
+
+                            <div class="border rounded-3 bg-light p-3 text-center h-100 d-flex flex-column justify-content-center">
+
+                                <div class="small text-muted mb-1">
+                                    Risk score
+                                </div>
+
+                                {% if alert.forecast and alert.forecast.skill_gap %}
+
+                                    <div class="display-6 fw-bold">
+                                        {{ alert.forecast.skill_gap.risk_score|floatformat:0 }}
+                                    </div>
+
+                                    <div class="small text-muted">
+                                        / 100
+                                    </div>
+
+                                {% else %}
+
+                                    <div class="h4 fw-bold text-muted mb-0">
+                                        —
+                                    </div>
+
+                                {% endif %}
+
+                                <div class="small text-muted mt-2">
+                                    Forecast-based market risk
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <div class="border rounded-3 bg-white p-5 text-center">
+
+        <span class="material-symbols-outlined fs-1 text-muted">
+            search_off
+        </span>
+
+        <h3 class="h5 fw-bold mt-3">
+            No matching signals
+        </h3>
+
+        <p class="text-muted mb-3">
+            No labour-market alerts match the selected filters.
+        </p>
+
+        <a href="{% url 'alerts' %}" class="btn btn-outline-primary">
+            Clear filters
+        </a>
+
+    </div>
+
+{% endif %}
+
+<!-- Methodology -->
+<div class="border-top mt-5 pt-4">
+
+    <div class="d-flex gap-3 align-items-start">
+
+        <span class="material-symbols-outlined text-primary">
+            info
+        </span>
+
+        <div>
+
+            <h2 class="h6 fw-bold mb-1">
+                How the Early Warning System works
+            </h2>
+
+            <p class="small text-muted mb-1">
+                SkillTek compares forecasted labour demand and worker supply at district-occupation level and converts significant deviations into prioritised signals.
+            </p>
+
+            <p class="small text-muted mb-0">
+                Alert severity incorporates projected gap magnitude, model confidence and persistence of the market condition. These signals support planner review and do not replace policy judgement.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+{% endblock %}

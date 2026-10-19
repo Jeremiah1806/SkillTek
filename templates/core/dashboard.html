@@ -1,0 +1,956 @@
+{% extends "base.html" %}
+
+{% block title %}Labour Intelligence Dashboard | SkillTek{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-4 px-lg-5 py-4">
+
+<!-- Header -->
+
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+    <div>
+        <div class="text-uppercase small fw-semibold text-primary mb-2">
+            Labour Market Intelligence
+        </div>
+        <h1 class="display-6 fw-bold mb-2">National Labour Dashboard</h1>
+        <p class="text-secondary mb-0">
+            Understand where skills are becoming scarce, saturated or strategically important.
+        </p>
+    </div>
+
+```
+<div class="text-lg-end">
+    <div class="small text-secondary">Forecast horizon</div>
+    {% if latest_forecast %}
+        <div class="fw-semibold">
+            Through {{ latest_forecast.forecast_month|date:"F Y" }}
+        </div>
+    {% else %}
+        <div class="fw-semibold">No forecast data</div>
+    {% endif %}
+</div>
+```
+
+</div>
+
+<!-- Skill Health -->
+
+<div class="row g-3 mb-4">
+
+```
+<div class="col-12 col-xl-4">
+    <div class="skilltek-card h-100 p-4">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <div class="small text-secondary mb-2">
+                    National Skill Health
+                </div>
+                <div class="display-3 fw-bold">
+                    {{ skill_health_score }}
+                </div>
+                <div class="small text-secondary">
+                    Overall balance indicator
+                </div>
+            </div>
+
+            <span class="material-symbols-outlined text-primary fs-2">
+                health_and_safety
+            </span>
+        </div>
+
+        <div class="progress mt-4" style="height: 8px;">
+            <div
+                class="progress-bar"
+                role="progressbar"
+                style="width: {{ skill_health_score }}%;"
+                aria-valuenow="{{ skill_health_score }}"
+                aria-valuemin="0"
+                aria-valuemax="100">
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-2 small text-secondary">
+            <span>Higher = healthier</span>
+            <span>0–100</span>
+        </div>
+    </div>
+</div>
+
+<div class="col-6 col-xl-2">
+    <div class="skilltek-card h-100 p-4">
+        <div class="small text-secondary mb-2">
+            States
+        </div>
+        <div class="display-6 fw-bold">
+            {{ total_states }}
+        </div>
+        <div class="small text-secondary mt-1">
+            Pilot coverage
+        </div>
+    </div>
+</div>
+
+<div class="col-6 col-xl-2">
+    <div class="skilltek-card h-100 p-4">
+        <div class="small text-secondary mb-2">
+            Districts
+        </div>
+        <div class="display-6 fw-bold">
+            {{ total_districts }}
+        </div>
+        <div class="small text-secondary mt-1">
+            Local intelligence
+        </div>
+    </div>
+</div>
+
+<div class="col-6 col-xl-2">
+    <div class="skilltek-card h-100 p-4">
+        <div class="small text-secondary mb-2">
+            Occupations
+        </div>
+        <div class="display-6 fw-bold">
+            {{ total_occupations }}
+        </div>
+        <div class="small text-secondary mt-1">
+            Across sectors
+        </div>
+    </div>
+</div>
+
+<div class="col-6 col-xl-2">
+    <div class="skilltek-card h-100 p-4">
+        <div class="small text-secondary mb-2">
+            Forecasts
+        </div>
+        <div class="display-6 fw-bold">
+            {{ total_forecasts }}
+        </div>
+        <div class="small text-secondary mt-1">
+            6-month projections
+        </div>
+    </div>
+</div>
+```
+
+</div>
+
+<!-- Gap Overview -->
+
+<div class="row g-3 mb-4">
+
+```
+<div class="col-6 col-lg-3">
+    <div class="skilltek-card h-100 p-4">
+        <div class="d-flex justify-content-between">
+            <span class="small text-secondary">
+                Critical shortages
+            </span>
+            <span class="material-symbols-outlined text-danger">
+                priority_high
+            </span>
+        </div>
+
+        <div class="display-6 fw-bold text-danger mt-3">
+            {{ critical_shortages }}
+        </div>
+
+        <div class="small text-secondary">
+            Forecast-month signals
+        </div>
+    </div>
+</div>
+
+<div class="col-6 col-lg-3">
+    <div class="skilltek-card h-100 p-4">
+        <div class="d-flex justify-content-between">
+            <span class="small text-secondary">
+                Shortages
+            </span>
+            <span class="material-symbols-outlined text-warning">
+                trending_up
+            </span>
+        </div>
+
+        <div class="display-6 fw-bold mt-3">
+            {{ shortages }}
+        </div>
+
+        <div class="small text-secondary">
+            Demand above supply
+        </div>
+    </div>
+</div>
+
+<div class="col-6 col-lg-3">
+    <div class="skilltek-card h-100 p-4">
+        <div class="d-flex justify-content-between">
+            <span class="small text-secondary">
+                Critical oversupply
+            </span>
+            <span class="material-symbols-outlined text-danger">
+                warning
+            </span>
+        </div>
+
+        <div class="display-6 fw-bold text-danger mt-3">
+            {{ critical_oversupply }}
+        </div>
+
+        <div class="small text-secondary">
+            High saturation risk
+        </div>
+    </div>
+</div>
+
+<div class="col-6 col-lg-3">
+    <div class="skilltek-card h-100 p-4">
+        <div class="d-flex justify-content-between">
+            <span class="small text-secondary">
+                Oversupply
+            </span>
+            <span class="material-symbols-outlined text-secondary">
+                trending_down
+            </span>
+        </div>
+
+        <div class="display-6 fw-bold mt-3">
+            {{ oversupply }}
+        </div>
+
+        <div class="small text-secondary">
+            Supply above demand
+        </div>
+    </div>
+</div>
+```
+
+</div>
+
+<!-- Early Warning System -->
+
+<div class="skilltek-card mb-4">
+
+```
+<div class="p-4">
+
+    <div class="row align-items-center g-4">
+
+        <div class="col-lg-8">
+
+            <div class="d-flex gap-3 align-items-start">
+
+                <div class="flex-shrink-0">
+                    <div
+                        class="d-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-3"
+                        style="width:48px;height:48px;"
+                    >
+                        <span class="material-symbols-outlined">
+                            notifications_active
+                        </span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="small text-uppercase fw-semibold text-primary mb-1">
+                        Decision Support · Early Warning System
+                    </div>
+
+                    <h5 class="fw-bold mb-2">
+                        Monitor emerging labour-market risks
+                    </h5>
+
+                    <p class="text-secondary mb-0">
+                        SkillTek converts forecasted demand-supply gaps into
+                        prioritised market signals so planners can identify
+                        shortages, oversupply and high-risk skill markets
+                        before they become larger workforce problems.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="d-flex flex-column flex-sm-row flex-lg-column gap-2">
+
+                <a
+                    href="{% url 'alerts' %}"
+                    class="btn btn-primary"
+                >
+                    <i class="bi bi-bell me-1"></i>
+                    Open Early Warning System
+                    <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+
+                <a
+                    href="{% url 'policy_simulator' %}"
+                    class="btn btn-outline-secondary"
+                >
+                    <i class="bi bi-sliders me-1"></i>
+                    Test a Policy Intervention
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+```
+
+</div>
+
+<!-- State Intelligence -->
+
+<div class="skilltek-card mb-4">
+
+```
+<div class="p-4 border-bottom">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+
+        <div>
+            <div class="small text-uppercase fw-semibold text-primary mb-2">
+                Geographic Drilldown
+            </div>
+
+            <h5 class="fw-bold mb-1">
+                State Intelligence
+            </h5>
+
+            <p class="small text-secondary mb-0">
+                Explore labour-market signals from state level down to individual districts.
+            </p>
+        </div>
+
+        <div class="align-self-md-center">
+            <span class="material-symbols-outlined text-primary fs-2">
+                map
+            </span>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="row g-0">
+
+    {% for state in states %}
+
+    <div class="col-12 col-md-6 col-xl-3">
+
+        <div class="p-4 h-100 border-bottom border-end">
+
+            <div class="d-flex justify-content-between align-items-start mb-3">
+
+                <div>
+                    <div class="fw-bold fs-5">
+                        {{ state.name }}
+                    </div>
+
+                    <div class="small text-secondary mt-1">
+                        {{ state.districts.all|length }} districts
+                    </div>
+                </div>
+
+                <span class="material-symbols-outlined text-primary">
+                    location_on
+                </span>
+
+            </div>
+
+            <div class="small text-secondary mb-3">
+                Labour market intelligence and forecast signals
+                across the state.
+            </div>
+
+            <a
+                href="{% url 'state_detail' state.id %}"
+                class="btn btn-sm btn-outline-primary w-100"
+            >
+                Explore state
+                <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+
+        </div>
+
+    </div>
+
+    {% empty %}
+
+    <div class="col-12">
+        <div class="text-center py-5 text-secondary">
+            No state intelligence available.
+        </div>
+    </div>
+
+    {% endfor %}
+
+</div>
+```
+
+</div>
+
+<!-- Highest Risk -->
+
+<div class="skilltek-card mb-4">
+
+```
+<div class="p-4 border-bottom">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+
+        <div>
+            <div class="small text-uppercase fw-semibold text-primary mb-1">
+                Market Risk
+            </div>
+
+            <h5 class="fw-bold mb-1">
+                Highest-Risk Skill Markets
+            </h5>
+
+            <p class="small text-secondary mb-0">
+                District and occupation combinations with the strongest projected intervention signals.
+            </p>
+        </div>
+
+        <div class="small text-secondary align-self-md-center">
+            6-month horizon
+        </div>
+
+    </div>
+</div>
+
+<div class="table-responsive">
+
+    <table class="table align-middle mb-0">
+
+        <thead>
+            <tr>
+                <th class="ps-4">Occupation</th>
+                <th>Location</th>
+                <th>Projected gap</th>
+                <th>Trend</th>
+                <th>Risk</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for item in highest_risk %}
+
+            <tr>
+
+                <td class="ps-4">
+                    <a
+                        href="{% url 'occupation_detail' item.occupation.id %}"
+                        class="text-decoration-none text-dark"
+                    >
+                        <div class="fw-semibold">
+                            {{ item.occupation.name }}
+                        </div>
+                        <div class="small text-secondary">
+                            {{ item.occupation.sector.name }}
+                        </div>
+                    </a>
+                </td>
+
+                <td>
+                    <a
+                        href="{% url 'district_detail' item.district.id %}"
+                        class="text-decoration-none"
+                    >
+                        <div class="fw-semibold text-primary">
+                            {{ item.district.name }}
+                        </div>
+                        <div class="small text-secondary">
+                            {{ item.district.state.name }}
+                        </div>
+                    </a>
+                </td>
+
+                <td>
+                    {% if item.last_gap > 0 %}
+                        <span class="fw-semibold text-danger">
+                            +{{ item.last_gap|floatformat:0 }}
+                        </span>
+                        <div class="small text-secondary">
+                            shortage
+                        </div>
+                    {% elif item.last_gap < 0 %}
+                        <span class="fw-semibold text-warning-emphasis">
+                            {{ item.last_gap|floatformat:0 }}
+                        </span>
+                        <div class="small text-secondary">
+                            oversupply
+                        </div>
+                    {% else %}
+                        <span class="fw-semibold">
+                            Balanced
+                        </span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if item.trend == "worsening" %}
+                        <span class="badge bg-danger-subtle text-danger">
+                            <span class="material-symbols-outlined align-middle" style="font-size:15px;">
+                                trending_up
+                            </span>
+                            Worsening
+                        </span>
+                    {% elif item.trend == "improving" %}
+                        <span class="badge bg-success-subtle text-success">
+                            <span class="material-symbols-outlined align-middle" style="font-size:15px;">
+                                trending_down
+                            </span>
+                            Improving
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary">
+                            Stable
+                        </span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <div class="fw-bold">
+                        {{ item.maximum_risk|floatformat:0 }}
+                    </div>
+                    <div class="small text-secondary">
+                        / 100
+                    </div>
+                </td>
+
+            </tr>
+
+            {% empty %}
+
+            <tr>
+                <td colspan="5" class="text-center py-5 text-secondary">
+                    No intelligence data available.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+```
+
+</div>
+
+<!-- Recommendations + Alerts -->
+
+<div class="row g-4 mb-4">
+
+```
+<!-- Recommendations -->
+<div class="col-12 col-xl-5">
+
+    <div class="skilltek-card h-100">
+
+        <div class="p-4 border-bottom">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div>
+                    <div class="small text-uppercase fw-semibold text-primary mb-1">
+                        Decision Support
+                    </div>
+
+                    <h5 class="fw-bold mb-1">
+                        Planner Actions
+                    </h5>
+
+                    <p class="small text-secondary mb-0">
+                        Recommended interventions
+                    </p>
+                </div>
+
+                <span class="material-symbols-outlined text-primary">
+                    lightbulb
+                </span>
+
+            </div>
+
+        </div>
+
+        <div>
+
+            {% for recommendation in top_recommendations %}
+
+            <div class="p-4 border-bottom">
+
+                <div class="d-flex gap-3">
+
+                    <div class="text-primary">
+
+                        {% if recommendation.recommendation_type == "increase_training" %}
+
+                            <span class="material-symbols-outlined">
+                                trending_up
+                            </span>
+
+                        {% elif recommendation.recommendation_type == "decrease_training" %}
+
+                            <span class="material-symbols-outlined">
+                                trending_down
+                            </span>
+
+                        {% elif recommendation.recommendation_type == "redirect_capacity" %}
+
+                            <span class="material-symbols-outlined">
+                                swap_horiz
+                            </span>
+
+                        {% else %}
+
+                            <span class="material-symbols-outlined">
+                                school
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                    <div class="flex-grow-1">
+
+                        <div class="fw-semibold mb-1">
+                            {{ recommendation.title }}
+                        </div>
+
+                        <div class="small text-secondary mb-2">
+                            {{ recommendation.occupation.name }}
+                            ·
+                            {{ recommendation.district.name }}
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-1">
+
+                            {% if recommendation.priority == "critical" %}
+
+                                <span class="badge bg-danger-subtle text-danger">
+                                    Critical
+                                </span>
+
+                            {% elif recommendation.priority == "high" %}
+
+                                <span class="badge bg-warning-subtle text-warning-emphasis">
+                                    High priority
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-secondary-subtle text-secondary">
+                                    {{ recommendation.priority|title }}
+                                </span>
+
+                            {% endif %}
+
+                            {% if recommendation.suggested_seats > 0 %}
+
+                                <span class="badge bg-light text-dark border">
+                                    +{{ recommendation.suggested_seats }} seats
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% empty %}
+
+            <div class="text-center py-5 text-secondary">
+                No recommendations available.
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Alerts -->
+<div class="col-12 col-xl-7">
+
+    <div class="skilltek-card h-100">
+
+        <div class="p-4 border-bottom">
+
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+
+                <div>
+
+                    <div class="small text-uppercase fw-semibold text-primary mb-1">
+                        Early Warning System
+                    </div>
+
+                    <h5 class="fw-bold mb-1">
+                        Labour Market Signals
+                    </h5>
+
+                    <p class="small text-secondary mb-0">
+                        Highest-priority forecast-driven signals
+                    </p>
+
+                </div>
+
+                <a
+                    href="{% url 'alerts' %}"
+                    class="btn btn-sm btn-outline-primary"
+                >
+                    View all alerts
+                    <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table align-middle mb-0">
+
+                <thead>
+
+                    <tr>
+                        <th class="ps-4">Skill market</th>
+                        <th>Signal</th>
+                        <th>Severity</th>
+                        <th>Months</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for item in recent_alerts %}
+
+                    <tr>
+
+                        <td class="ps-4">
+
+                            <a
+                                href="{% url 'district_detail' item.district.id %}"
+                                class="text-decoration-none text-dark"
+                            >
+
+                                <div class="fw-semibold">
+                                    {{ item.occupation.name }}
+                                </div>
+
+                                <div class="small text-secondary">
+                                    {{ item.district.name }},
+                                    {{ item.district.state.name }}
+                                </div>
+
+                            </a>
+
+                        </td>
+
+                        <td>
+
+                            {% if item.alert_type == "shortage" %}
+
+                                <span class="text-danger fw-semibold">
+                                    Shortage
+                                </span>
+
+                            {% elif item.alert_type == "oversupply" %}
+
+                                <span class="text-warning-emphasis fw-semibold">
+                                    Oversupply
+                                </span>
+
+                            {% elif item.alert_type == "emerging" %}
+
+                                <span class="text-primary fw-semibold">
+                                    Emerging skill
+                                </span>
+
+                            {% elif item.alert_type == "rapid_growth" %}
+
+                                <span class="text-primary fw-semibold">
+                                    Rapid growth
+                                </span>
+
+                            {% else %}
+
+                                {{ item.alert_type|title }}
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {% if item.severity == "critical" %}
+
+                                <span class="badge bg-danger-subtle text-danger">
+                                    Critical
+                                </span>
+
+                            {% elif item.severity == "high" %}
+
+                                <span class="badge bg-warning-subtle text-warning-emphasis">
+                                    High
+                                </span>
+
+                            {% elif item.severity == "medium" %}
+
+                                <span class="badge bg-primary-subtle text-primary">
+                                    Medium
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-secondary-subtle text-secondary">
+                                    {{ item.severity|title }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <span class="fw-semibold">
+                                {{ item.count }}
+                            </span>
+
+                            <span class="small text-secondary">
+                                / 6
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-secondary">
+                            No active signals.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div class="p-3 border-top bg-light">
+
+            <div class="d-flex align-items-center gap-2 small text-secondary">
+
+                <span class="material-symbols-outlined text-primary" style="font-size:19px;">
+                    info
+                </span>
+
+                <span>
+                    Signals are generated from forecasted demand-supply gaps,
+                    model confidence and persistence.
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+```
+
+</div>
+
+<!-- Product explanation -->
+
+<div class="skilltek-card p-4">
+
+```
+<div class="row align-items-center g-4">
+
+    <div class="col-lg-8">
+
+        <div class="small text-uppercase fw-semibold text-primary mb-2">
+            Decision intelligence
+        </div>
+
+        <h5 class="fw-bold mb-2">
+            From labour data to policy action.
+        </h5>
+
+        <p class="text-secondary mb-0">
+            SkillTek combines historical labour-market signals,
+            training capacity and machine-learning forecasts to
+            identify where future skill shortages or oversupply
+            may emerge — then translates those signals into
+            planner-facing interventions.
+        </p>
+
+    </div>
+
+    <div class="col-lg-4">
+
+        <div class="border rounded-3 p-3">
+
+            <div class="small text-secondary mb-2">
+                Current pipeline
+            </div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+
+                <span class="badge bg-light text-dark border">
+                    Data
+                </span>
+
+                <span class="text-secondary">→</span>
+
+                <span class="badge bg-light text-dark border">
+                    Forecast
+                </span>
+
+                <span class="text-secondary">→</span>
+
+                <span class="badge bg-light text-dark border">
+                    Gap
+                </span>
+
+                <span class="text-secondary">→</span>
+
+                <span class="badge bg-primary">
+                    Action
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+```
+
+</div>
+
+</div>
+
+{% endblock %}
